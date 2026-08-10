@@ -33,6 +33,18 @@ export default function Support({ onContact, triggerToast }) {
     },
   ];
 
+  const defaultArticles = [
+    'How to capture an accurate rooftop GPS location',
+    'Understanding AI confidence and recommendation scores',
+    'Required photos for a complete rooftop survey',
+    'How rainwater potential is calculated',
+    'Exporting a signed assessment report',
+  ];
+
+  const filteredArticles = defaultArticles.filter((art) =>
+    art.toLowerCase().includes(searchVal.toLowerCase())
+  );
+
   const handleArticleClick = (title) => {
     if (triggerToast) triggerToast(`Opening article: "${title}"`);
   };
@@ -61,7 +73,7 @@ export default function Support({ onContact, triggerToast }) {
       </div>
 
       <div className="content-grid" style={{ marginTop: '17px' }}>
-        <FAQList onArticleSelect={handleArticleClick} />
+        <FAQList articles={filteredArticles} onArticleSelect={handleArticleClick} />
         <ContactSupport onContact={onContact} />
       </div>
     </>
