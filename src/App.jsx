@@ -6,6 +6,7 @@ import GisIntelligence from './pages/gis/GisIntelligence';
 import Reports from './pages/reports/Reports';
 import Analytics from './pages/analytics/Analytics';
 import Assessments from './pages/assessments/Assessments';
+import NewAssessment from './pages/assessments/NewAssessment';
 import AIProcessing from './pages/aiProcessing/AIProcessing';
 import AssessmentResult from './pages/assessmentResult/AssessmentResult';
 import Design3D from './pages/design3D/Design3D';
@@ -48,7 +49,7 @@ function App() {
   }, [toastShow]);
 
   const handleNewAssessment = () => {
-    setCurrentPage('AI Processing');
+    setCurrentPage('New Assessment');
   };
 
   const handleQuickAction = (actionKey) => {
@@ -75,6 +76,17 @@ function App() {
             onRowClick={(a) => triggerToast(`Viewing survey ${a.id}...`)}
           />
         );
+      case 'New Assessment':
+        return (
+          <NewAssessment
+            onCancel={() => setCurrentPage('Dashboard')}
+            onSubmit={() => {
+              triggerToast('Assessment submitted successfully.');
+              setCurrentPage('AI Processing');
+            }}
+            triggerToast={triggerToast}
+          />
+        );
       case 'AI Processing':
         return (
           <AIProcessing onViewResults={() => setCurrentPage('Assessment Result')} />
@@ -82,7 +94,16 @@ function App() {
       case 'Assessment Result':
         return (
           <AssessmentResult
-            onReport={() => triggerToast('Opening report preview...')}
+            onReport={() => {
+              setSelectedReport({
+                id: 'RIN-2026-0483',
+                building: 'Municipal Community Hall',
+                type: 'Government',
+                potential: '48,600 L',
+                date: '10 Aug 2026'
+              });
+              setCurrentPage('Report Preview');
+            }}
             onDesign={() => setCurrentPage('3D Design')}
           />
         );
@@ -95,7 +116,10 @@ function App() {
         );
       case 'GIS Intelligence':
         return (
-          <GisIntelligence onNewAssessment={handleNewAssessment} />
+          <GisIntelligence
+            onNewAssessment={handleNewAssessment}
+            triggerToast={triggerToast}
+          />
         );
       case 'Reports':
         return (
@@ -146,7 +170,11 @@ function App() {
 
   return (
     <>
-      <DashboardLayout currentPage={currentPage} onPageChange={setCurrentPage}>
+      <DashboardLayout
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        triggerToast={triggerToast}
+      >
         {renderPage()}
       </DashboardLayout>
       <Toast show={toastShow} message={toastMessage} icon={toastIcon} />
