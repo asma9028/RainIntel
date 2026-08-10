@@ -9,10 +9,14 @@ import Assessments from './pages/assessments/Assessments';
 import AIProcessing from './pages/aiProcessing/AIProcessing';
 import AssessmentResult from './pages/assessmentResult/AssessmentResult';
 import Design3D from './pages/design3D/Design3D';
+import Settings from './pages/settings/Settings';
+import Support from './pages/support/Support';
+import ReportPreview from './pages/reportPreview/ReportPreview';
 import Toast from './components/common/Toast';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('Login');
+  const [selectedReport, setSelectedReport] = useState(null);
   const [toastShow, setToastShow] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastIcon, setToastIcon] = useState('circle-check');
@@ -97,7 +101,18 @@ function App() {
         return (
           <Reports
             onExport={() => triggerToast('Exporting reports register...')}
-            onReportSelect={(r) => triggerToast(`Opening report ${r.id}...`)}
+            onReportSelect={(r) => {
+              setSelectedReport(r);
+              setCurrentPage('Report Preview');
+            }}
+          />
+        );
+      case 'Report Preview':
+        return (
+          <ReportPreview
+            report={selectedReport}
+            onPrint={() => triggerToast('Sending report to system printer...')}
+            onDownload={() => triggerToast('Downloading report PDF document...')}
           />
         );
       case 'Analytics':
@@ -108,17 +123,17 @@ function App() {
         );
       case 'Settings':
         return (
-          <div style={{ padding: '1rem', border: '1px dashed #9ca3af', borderRadius: '4px', background: '#fff' }}>
-            <h2>Settings</h2>
-            <p>Main content area for preferences.</p>
-          </div>
+          <Settings
+            onSave={() => triggerToast('Settings saved successfully.')}
+            triggerToast={triggerToast}
+          />
         );
       case 'Support':
         return (
-          <div style={{ padding: '1rem', border: '1px dashed #9ca3af', borderRadius: '4px', background: '#fff' }}>
-            <h2>Support</h2>
-            <p>Main content area for Support documentation.</p>
-          </div>
+          <Support
+            onContact={() => triggerToast('Support request created - we will contact you shortly.')}
+            triggerToast={triggerToast}
+          />
         );
       default:
         return <div>Page not found</div>;
