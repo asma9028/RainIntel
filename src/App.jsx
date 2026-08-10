@@ -5,6 +5,7 @@ import FieldEngineerDashboard from './pages/fieldEngineer/FieldEngineerDashboard
 import GisIntelligence from './pages/gis/GisIntelligence';
 import Reports from './pages/reports/Reports';
 import Analytics from './pages/analytics/Analytics';
+import Assessments from './pages/assessments/Assessments';
 import Toast from './components/common/Toast';
 
 function App() {
@@ -62,10 +63,10 @@ function App() {
         );
       case 'Assessments':
         return (
-          <div style={{ padding: '1rem', border: '1px dashed #9ca3af', borderRadius: '4px', background: '#fff' }}>
-            <h2>Assessments</h2>
-            <p>Main content area for Assessments.</p>
-          </div>
+          <Assessments
+            onNewAssessment={handleNewAssessment}
+            onRowClick={(a) => triggerToast(`Viewing survey ${a.id}...`)}
+          />
         );
       case 'GIS Intelligence':
         return (
