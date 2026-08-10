@@ -1,19 +1,16 @@
 import React from 'react';
+import DashboardLayout from './layouts/DashboardLayout';
 
 function App() {
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontFamily: 'system-ui, sans-serif',
-      backgroundColor: '#f3f4f6',
-      color: '#1f2937'
-    }}>
-      <h1>RainIntel React Application Running</h1>
-    </div>
+    <DashboardLayout>
+      <div style={{ padding: '1rem', border: '1px dashed #9ca3af', borderRadius: '4px' }}>
+        <h2>Main Content Area</h2>
+        <p>DashboardLayout loaded successfully. Ready for role-specific module implementation.</p>
+      </div>
+    </DashboardLayout>
   );
 }
 
 export default App;
+
