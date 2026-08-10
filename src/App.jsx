@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './pages/auth/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import FieldEngineerDashboard from './pages/fieldEngineer/FieldEngineerDashboard';
+import GisIntelligence from './pages/gis/GisIntelligence';
 import Toast from './components/common/Toast';
 
 function App() {
@@ -66,10 +67,7 @@ function App() {
         );
       case 'GIS Intelligence':
         return (
-          <div style={{ padding: '1rem', border: '1px dashed #9ca3af', borderRadius: '4px', background: '#fff' }}>
-            <h2>GIS Intelligence</h2>
-            <p>Main content area for GIS Intelligence mapping.</p>
-          </div>
+          <GisIntelligence onNewAssessment={handleNewAssessment} />
         );
       case 'Reports':
         return (
