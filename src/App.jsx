@@ -6,6 +6,9 @@ import GisIntelligence from './pages/gis/GisIntelligence';
 import Reports from './pages/reports/Reports';
 import Analytics from './pages/analytics/Analytics';
 import Assessments from './pages/assessments/Assessments';
+import AIProcessing from './pages/aiProcessing/AIProcessing';
+import AssessmentResult from './pages/assessmentResult/AssessmentResult';
+import Design3D from './pages/design3D/Design3D';
 import Toast from './components/common/Toast';
 
 function App() {
@@ -41,7 +44,7 @@ function App() {
   }, [toastShow]);
 
   const handleNewAssessment = () => {
-    triggerToast('New assessment workflow starting... (Milestone 4)');
+    setCurrentPage('AI Processing');
   };
 
   const handleQuickAction = (actionKey) => {
@@ -66,6 +69,24 @@ function App() {
           <Assessments
             onNewAssessment={handleNewAssessment}
             onRowClick={(a) => triggerToast(`Viewing survey ${a.id}...`)}
+          />
+        );
+      case 'AI Processing':
+        return (
+          <AIProcessing onViewResults={() => setCurrentPage('Assessment Result')} />
+        );
+      case 'Assessment Result':
+        return (
+          <AssessmentResult
+            onReport={() => triggerToast('Opening report preview...')}
+            onDesign={() => setCurrentPage('3D Design')}
+          />
+        );
+      case '3D Design':
+        return (
+          <Design3D
+            onReset={() => triggerToast('3D view camera reset.')}
+            onFullscreen={() => triggerToast('Entering fullscreen Mode...')}
           />
         );
       case 'GIS Intelligence':
