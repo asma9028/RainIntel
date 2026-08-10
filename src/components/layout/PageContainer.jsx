@@ -1,9 +1,10 @@
 import React from 'react';
 
-export default function PageContainer({ children }) {
+export default function PageContainer({ children, className = '', ...props }) {
   return (
-    <div className="page-container">
+    <section className={`page ${className}`.trim()} {...props}>
       {children}
-    </div>
+    </section>
   );
 }
+
