@@ -1,0 +1,4 @@
+rainintel:
+  config:
+    message: "Config Server is working!"
+    version: "1.0"
