@@ -4,6 +4,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import FieldEngineerDashboard from './pages/fieldEngineer/FieldEngineerDashboard';
 import GisIntelligence from './pages/gis/GisIntelligence';
 import Reports from './pages/reports/Reports';
+import Analytics from './pages/analytics/Analytics';
 import Toast from './components/common/Toast';
 
 function App() {
@@ -79,10 +80,9 @@ function App() {
         );
       case 'Analytics':
         return (
-          <div style={{ padding: '1rem', border: '1px dashed #9ca3af', borderRadius: '4px', background: '#fff' }}>
-            <h2>Analytics</h2>
-            <p>Main content area for District performance charts.</p>
-          </div>
+          <Analytics
+            onExport={() => triggerToast('Exporting district analytics summary...')}
+          />
         );
       case 'Settings':
         return (
