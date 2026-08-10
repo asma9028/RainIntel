@@ -13,3 +13,5 @@ spring:
           default-label: feature/person1-platform
           search-paths:
             - backend/config-repo
+          username: ${GIT_USERNAME}
+          password: ${GIT_TOKEN}
