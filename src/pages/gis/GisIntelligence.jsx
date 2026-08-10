@@ -7,7 +7,7 @@ import GisMapControls from '../../components/gis/GisMapControls';
 import GisLegend from '../../components/gis/GisLegend';
 import GisSiteCard from '../../components/gis/GisSiteCard';
 
-export default function GisIntelligence({ onNewAssessment }) {
+export default function GisIntelligence({ onNewAssessment, triggerToast }) {
   const gisLocations = [
     {
       id: '1',
@@ -45,7 +45,11 @@ export default function GisIntelligence({ onNewAssessment }) {
 
   const pageActions = (
     <>
-      <Button variant="secondary" icon="layers">
+      <Button
+        variant="secondary"
+        icon="layers"
+        onClick={() => triggerToast && triggerToast('Changing map layers...')}
+      >
         Layers
       </Button>
       <Button variant="primary" icon="plus" onClick={onNewAssessment}>
@@ -74,7 +78,12 @@ export default function GisIntelligence({ onNewAssessment }) {
         selectedLocation={selectedLocation}
         onLocationSelect={handleLocationSelect}
       >
-        <GisMapControls />
+        <GisMapControls
+          onZoomIn={() => triggerToast && triggerToast('Zooming in GIS map...')}
+          onZoomOut={() => triggerToast && triggerToast('Zooming out GIS map...')}
+          onLocate={() => triggerToast && triggerToast('Locating your position...')}
+          onCompass={() => triggerToast && triggerToast('Recalibrating compass...')}
+        />
         <GisLegend />
         <GisSiteCard location={selectedLocation} />
       </GisMap>
