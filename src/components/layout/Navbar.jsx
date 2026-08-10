@@ -1,30 +1,155 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SearchInput from '../common/SearchInput';
 import IconButton from '../common/IconButton';
 import Avatar from '../common/Avatar';
 
-export default function Navbar({ currentPage }) {
+export default function Navbar({ currentPage, onPageChange, triggerToast }) {
   const isDashboard = currentPage === 'Dashboard';
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
+    setShowProfileMenu(false);
+  };
+
+  const handleAvatarClick = () => {
+    setShowProfileMenu(!showProfileMenu);
+    setShowNotifications(false);
+  };
+
+  const handleMenuSelect = (page) => {
+    setShowProfileMenu(false);
+    if (onPageChange) onPageChange(page);
+  };
+
+  const getPageTitle = () => {
+    if (isDashboard) {
+      return (
+        <>
+          Good morning, Anita <span>✦</span>
+        </>
+      );
+    }
+    switch (currentPage) {
+      case 'New Assessment':
+        return 'Assessment workspace';
+      case 'Assessment Result':
+        return 'Assessment results';
+      case '3D Design':
+        return '3D system design';
+      case 'Report Preview':
+        return 'Report preview';
+      case 'AI Processing':
+        return 'AI Processing';
+      default:
+        return currentPage;
+    }
+  };
 
   return (
-    <header className="topbar">
+    <header className="topbar" style={{ position: 'relative' }}>
       <div>
         <p className="eyebrow">WEDNESDAY, 05 AUGUST 2026</p>
-        <h1 id="page-title">
-          {isDashboard ? (
-            <>
-              Good morning, Anita <span>✦</span>
-            </>
-          ) : (
-            currentPage
-          )}
-        </h1>
+        <h1 id="page-title">{getPageTitle()}</h1>
       </div>
       <div className="top-actions">
-        <SearchInput placeholder="Search buildings, reports…" />
-        <IconButton icon="bell" hasBadge={true} />
-        <IconButton icon="message-square" />
-        <Avatar initials="AS" className="top-avatar" onClick={() => {}} />
+        <SearchInput
+          placeholder="Search buildings, reports…"
+          onChange={(e) => {}}
+        />
+        <IconButton
+          icon="bell"
+          hasBadge={true}
+          onClick={handleNotificationClick}
+        />
+        <IconButton
+          icon="message-square"
+          onClick={() => triggerToast && triggerToast('Opening direct messaging...')}
+        />
+        <Avatar initials="AS" className="top-avatar" onClick={handleAvatarClick} />
+
+        {showNotifications && (
+          <>
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 999,
+                background: 'transparent',
+              }}
+              onClick={() => setShowNotifications(false)}
+            />
+            <div className="card" style={{
+              position: 'absolute',
+              top: '55px',
+              right: '80px',
+              zIndex: 1000,
+              width: '280px',
+              padding: '12px',
+              boxShadow: '0 10px 25px rgba(15,23,42,0.15)',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              background: '#fff',
+              textAlign: 'left'
+            }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 600, color: '#0f172a' }}>Notifications</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '11px', color: '#475569' }}>
+                <li style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <b>AI Processing complete</b>
+                  <p style={{ margin: '2px 0 0' }}>Rooftop analysis for Municipal Hall is ready.</p>
+                </li>
+                <li style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <b>New Survey Draft</b>
+                  <p style={{ margin: '2px 0 0' }}>Draft survey saved by Anita Sharma.</p>
+                </li>
+                <li style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <b>System update</b>
+                  <p style={{ margin: '2px 0 0' }}>RainIntel database successfully updated.</p>
+                </li>
+              </ul>
+            </div>
+          </>
+        )}
+
+        {showProfileMenu && (
+          <>
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 999,
+                background: 'transparent',
+              }}
+              onClick={() => setShowProfileMenu(false)}
+            />
+            <div className="card" style={{
+              position: 'absolute',
+              top: '55px',
+              right: '20px',
+              zIndex: 1000,
+              width: '160px',
+              padding: '8px',
+              boxShadow: '0 10px 25px rgba(15,23,42,0.15)',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              background: '#fff',
+              textAlign: 'left'
+            }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '11px', color: '#475569' }}>
+                <li style={{ padding: '8px 10px', cursor: 'pointer', borderRadius: '6px' }} onClick={() => handleMenuSelect('Settings')}>
+                  My Profile
+                </li>
+                <li style={{ padding: '8px 10px', cursor: 'pointer', borderRadius: '6px' }} onClick={() => handleMenuSelect('Settings')}>
+                  Workspace Settings
+                </li>
+                <li style={{ padding: '8px 10px', borderTop: '1px solid #f1f5f9', cursor: 'pointer', color: '#dc2626' }} onClick={() => handleMenuSelect('Login')}>
+                  Sign Out
+                </li>
+              </ul>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );
