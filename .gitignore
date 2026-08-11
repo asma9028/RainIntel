@@ -26,3 +26,29 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+# Python
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Python generated files
+*.egg-info/
+
+# Oracle / database files
+*.dmp
+*.dbf
+*.ora
+*.ctl
+
+# Credentials and private keys
+*.pem
+*.key
+*.p12
+*.jks
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
