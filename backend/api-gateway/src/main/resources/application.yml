@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -7,10 +7,27 @@ spring:
 
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+        - id: assessments-route
+          uri: lb://business-service
+          predicates:
+            - Path=/api/assessments/**
+        - id: gis-route
+          uri: lb://business-service
+          predicates:
+            - Path=/api/gis/**
+        - id: districts-route
+          uri: lb://business-service
+          predicates:
+            - Path=/api/districts/**
+        - id: analytics-route
+          uri: lb://business-service
+          predicates:
+            - Path=/api/analytics/**
 
 eureka:
   client:

@@ -4,10 +4,13 @@ server:
 spring:
   application:
     name: config-server
-
+  profiles:
+    active: native
   cloud:
     config:
       server:
+        native:
+          search-locations: file:../config-repo
         git:
           uri: https://github.com/asma9028/RainIntel.git
           default-label: feature/person1-platform

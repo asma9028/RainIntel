@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PageHeading from '../../components/common/PageHeading';
 import Button from '../../components/common/Button';
 import AnalyticsFilters from '../../components/analytics/AnalyticsFilters';
@@ -7,12 +7,35 @@ import AssessmentTrendChart from '../../components/analytics/AssessmentTrendChar
 import WaterPotentialChart from '../../components/analytics/WaterPotentialChart';
 import EngineerRanking from '../../components/analytics/EngineerRanking';
 import AnalyticsSummary from '../../components/analytics/AnalyticsSummary';
+import { api } from '../../services/api';
 
 export default function Analytics({ onExport }) {
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        const data = await api.analytics.getSummary();
+        setSummary(data);
+      } catch (err) {
+        console.error('Failed to load analytics summary', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSummary();
+  }, []);
+
+  const totalHarvest = summary ? (summary.totalHarvestedLiters / 1000000.0).toFixed(2) : '45.8';
+  const totalAssessments = summary ? summary.totalAssessments : '1,284';
+  const avgConf = summary ? summary.averageConfidence : '96.2';
+  const rechargePotential = summary ? (summary.totalHarvestedLiters * 0.4 / 1000000.0).toFixed(2) : '18.2';
+
   const kpis = [
     {
       title: 'Water saved',
-      value: '45.8',
+      value: String(totalHarvest),
       valueUnit: ' M L',
       icon: 'droplets',
       iconColor: 'teal',
@@ -28,15 +51,15 @@ export default function Analytics({ onExport }) {
     },
     {
       title: 'AI confidence',
-      value: '96.2',
+      value: String(avgConf),
       valueUnit: '%',
       icon: 'circle-check',
       iconColor: 'green',
-      subtitle: 'Across 1,284 assessments',
+      subtitle: `Across ${totalAssessments} assessments`,
     },
     {
       title: 'Recharge contribution',
-      value: '18.2',
+      value: String(rechargePotential),
       valueUnit: ' M L',
       icon: 'trees',
       iconColor: 'amber',

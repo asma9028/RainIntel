@@ -510,7 +510,21 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
                 if (step < 6) {
                   setStep(step + 1);
                 } else {
-                  onSubmit();
+                  const areaNum = parseFloat(String(roofArea).replace(/,/g, '')) || 1200;
+                  const payload = {
+                    buildingName,
+                    buildingType,
+                    address,
+                    districtName: district,
+                    latitude: 16.5062, // Vijayawada mock lock coord
+                    longitude: 80.6480, // Vijayawada mock lock coord
+                    roofAreaSqFt: areaNum,
+                    roofMaterial,
+                    roofSlope: roofSlope === 'Flat' ? 0.0 : 2.0,
+                    waterDemandLpd: 500.0,
+                    purpose: 'Rainwater harvesting feasibility'
+                  };
+                  onSubmit(payload);
                 }
               }}
             >
