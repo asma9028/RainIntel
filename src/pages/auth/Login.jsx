@@ -1,15 +1,29 @@
 import React, { useState } from 'react';
 import LucideIcon from '../../components/common/LucideIcon';
 import Button from '../../components/common/Button';
+import { api } from '../../services/api';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('anita.sharma@jalshakti.gov.in');
   const [password, setPassword] = useState('rainintel2026');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (onLogin) {
-      onLogin();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await api.auth.login(email, password);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res));
+      if (onLogin) {
+        onLogin(res);
+      }
+    } catch (err) {
+      setError(err.message || 'Invalid government email or password');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,6 +55,20 @@ export default function Login({ onLogin }) {
           </div>
           <h2>Welcome back</h2>
           <p>Sign in to your Jal Shakti Mission workspace.</p>
+          {error && (
+            <div style={{
+              background: '#fef2f2',
+              color: '#991b1b',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              marginTop: '12px',
+              border: '1px solid #fee2e2',
+              textAlign: 'left'
+            }}>
+              <b>Error:</b> {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <label>
               Government email
@@ -48,6 +76,7 @@ export default function Login({ onLogin }) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
               />
             </label>
             <label>
@@ -56,6 +85,7 @@ export default function Login({ onLogin }) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
               />
             </label>
             <div className="remember">
@@ -65,10 +95,11 @@ export default function Login({ onLogin }) {
             <Button
               type="submit"
               variant="primary"
-              icon="arrow-right"
+              icon={loading ? null : "arrow-right"}
               iconPosition="right"
+              disabled={loading}
             >
-              Sign in to workspace
+              {loading ? "Signing in..." : "Sign in to workspace"}
             </Button>
           </form>
           <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '10px' }}>Powered by Ministry of Jal Shakti</p>

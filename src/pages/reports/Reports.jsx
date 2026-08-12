@@ -1,44 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageHeading from '../../components/common/PageHeading';
 import Button from '../../components/common/Button';
 import ReportFilters from '../../components/reports/ReportFilters';
 import ReportTable from '../../components/reports/ReportTable';
+import { api } from '../../services/api';
 
 export default function Reports({ onExport, onReportSelect }) {
-  const reportsData = [
-    {
-      id: 'RIN-2026-0482',
-      building: 'Govt. High School, Patamata',
-      engineer: 'Anita Sharma',
-      date: 'Today',
-      status: 'Completed',
-      potential: '48,600 L',
-    },
-    {
-      id: 'RIN-2026-0481',
-      building: 'Municipal Office, Benz Circle',
-      engineer: 'Rahul Varma',
-      date: 'Today',
-      status: 'In review',
-      potential: '32,400 L',
-    },
-    {
-      id: 'RIN-2026-0480',
-      building: 'District Library, Moghalrajpuram',
-      engineer: 'Anita Sharma',
-      date: '04 Aug',
-      status: 'Completed',
-      potential: '28,900 L',
-    },
-    {
-      id: 'RIN-2026-0479',
-      building: 'Primary Health Centre, Gunadala',
-      engineer: 'Priya Kumar',
-      date: '03 Aug',
-      status: 'Completed',
-      potential: '41,240 L',
-    },
-  ];
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadReports() {
+      try {
+        const res = await api.assessments.list();
+        const mapped = res.map((a) => {
+          const reportId = `RIN-2026-${String(a.assessmentId).padStart(4, '0')}`;
+          return {
+            id: reportId,
+            building: a.buildingName,
+            engineer: 'Jal Shakti Engineer',
+            date: new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+            status: a.status === 'APPROVED' ? 'Completed' : a.status === 'SUBMITTED' ? 'In review' : 'Processing',
+            potential: `${Math.round(a.harvestPotentialL || 0).toLocaleString()} L`,
+            raw: a
+          };
+        });
+        setReports(mapped);
+      } catch (err) {
+        console.error('Failed to load reports', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadReports();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -69,10 +64,28 @@ export default function Reports({ onExport, onReportSelect }) {
         statusFilter="All status"
       />
 
-      <ReportTable
-        reports={reportsData}
-        onReportSelect={onReportSelect}
-      />
+      {loading ? (
+        <div style={{ display: 'grid', placeItems: 'center', height: '200px', fontSize: '13px', color: '#64748b' }}>
+          Loading reports...
+        </div>
+      ) : (
+        <ReportTable
+          reports={reports}
+          onReportSelect={(rep) => {
+            if (onReportSelect) {
+              const a = rep.raw;
+              onReportSelect({
+                id: rep.id,
+                building: rep.building,
+                engineer: rep.engineer,
+                district: `${a.districtName || 'Coimbatore'} District`,
+                potential: `${Math.round(a.harvestPotentialL || 0).toLocaleString()} litres`,
+                recommendation: a.recommendationReason || `Install a ${a.systemType || 'Hybrid'} system. Recommended storage is ${Math.round(a.storageCapacityL || 0).toLocaleString()} L with a ${a.filterType || 'filter'} and ${a.rechargeType || 'recharge type'}.`
+              });
+            }
+          }}
+        />
+      )}
     </>
   );
 }

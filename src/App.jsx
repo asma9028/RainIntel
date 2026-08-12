@@ -14,9 +14,11 @@ import Settings from './pages/settings/Settings';
 import Support from './pages/support/Support';
 import ReportPreview from './pages/reportPreview/ReportPreview';
 import Toast from './components/common/Toast';
+import { api } from './services/api';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('Login');
+  const [latestAssessment, setLatestAssessment] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
   const [toastShow, setToastShow] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -80,9 +82,16 @@ function App() {
         return (
           <NewAssessment
             onCancel={() => setCurrentPage('Dashboard')}
-            onSubmit={() => {
-              triggerToast('Assessment submitted successfully.');
-              setCurrentPage('AI Processing');
+            onSubmit={async (payload) => {
+              try {
+                triggerToast('Running AI simulation & calculations...', 'loader');
+                const result = await api.assessments.create(payload);
+                setLatestAssessment(result);
+                triggerToast('Assessment submitted successfully.');
+                setCurrentPage('AI Processing');
+              } catch (err) {
+                triggerToast('Submission failed: ' + err.message, 'circle-alert');
+              }
             }}
             triggerToast={triggerToast}
           />
@@ -94,14 +103,17 @@ function App() {
       case 'Assessment Result':
         return (
           <AssessmentResult
+            assessment={latestAssessment}
             onReport={() => {
-              setSelectedReport({
-                id: 'RIN-2026-0483',
-                building: 'Municipal Community Hall',
-                type: 'Government',
-                potential: '48,600 L',
-                date: '10 Aug 2026'
-              });
+              if (latestAssessment) {
+                setSelectedReport({
+                  id: `RIN-2026-${String(latestAssessment.assessmentId).padStart(4, '0')}`,
+                  building: latestAssessment.buildingName,
+                  type: latestAssessment.buildingType,
+                  potential: `${Math.round(latestAssessment.harvestPotentialL).toLocaleString()} L`,
+                  date: new Date(latestAssessment.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                });
+              }
               setCurrentPage('Report Preview');
             }}
             onDesign={() => setCurrentPage('3D Design')}
