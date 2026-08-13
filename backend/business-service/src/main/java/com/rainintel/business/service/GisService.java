@@ -27,7 +27,7 @@ public class GisService {
     private final SoilGridDataRepository soilGridDataRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${rainintel.gis.script-path:C:/Users/dhany/RainIntel/gis/gis_bridge.py}")
+    @Value("${rainintel.gis.script-path:C:/Users/Public/Downloads/RainIntel/gis/gis_bridge.py}")
     private String scriptPath;
 
     public GisService(DistrictRepository districtRepository,

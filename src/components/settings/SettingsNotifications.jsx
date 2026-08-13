@@ -1,13 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 
 export default function SettingsNotifications() {
-  const [preferences, setPreferences] = useState({
-    completion: true,
-    performance: true,
-    approval: false,
-    announcements: true,
-  });
+  const loadPreferences = () => {
+    const saved = localStorage.getItem('pref_notifications');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        /* Ignore parse error */
+      }
+    }
+    return {
+      completion: true,
+      performance: true,
+      approval: false,
+      announcements: true,
+    };
+  };
+
+  const [preferences, setPreferences] = useState(loadPreferences());
+
+  useEffect(() => {
+    localStorage.setItem('pref_notifications', JSON.stringify(preferences));
+  }, [preferences]);
 
   const toggle = (key) => {
     setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -39,7 +55,7 @@ export default function SettingsNotifications() {
   return (
     <Card className="setting-group">
       <h3>Notification preferences</h3>
-      <p>Choose which important workspace events require your attention.</p>
+      <p>Choose which important workspace events require your attention. <i>(Saved on this device)</i></p>
       {notificationItems.map((item) => (
         <div key={item.key} className="toggle-row">
           <div>

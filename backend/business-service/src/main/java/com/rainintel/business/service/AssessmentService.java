@@ -221,9 +221,14 @@ public class AssessmentService {
     }
 
     @Transactional(readOnly = true)
-    public AssessmentDetailResponse getAssessmentDetails(Long assessmentId) {
+    public AssessmentDetailResponse getAssessmentDetails(Long assessmentId, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+
         FieldAssessment assessment = assessmentRepository.findById(assessmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Assessment not found: " + assessmentId));
+
+        verifyAssessmentAccess(user, assessment);
 
         RwhResult result = rwhResultRepository.findByAssessment(assessment).orElse(null);
         List<RwhRecommendation> recs = rwhRecommendationRepository.findByAssessment(assessment);
@@ -233,14 +238,38 @@ public class AssessmentService {
     }
 
     @Transactional
-    public AssessmentDetailResponse updateStatus(Long assessmentId, String status) {
+    public AssessmentDetailResponse updateStatus(Long assessmentId, String status, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+
         FieldAssessment assessment = assessmentRepository.findById(assessmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Assessment not found: " + assessmentId));
         
+        verifyAssessmentAccess(user, assessment);
+
         assessment.setStatus(status.toUpperCase());
         assessment = assessmentRepository.save(assessment);
 
-        return getAssessmentDetails(assessmentId);
+        return getAssessmentDetails(assessment);
+    }
+
+    private void verifyAssessmentAccess(User user, FieldAssessment assessment) {
+        String roleName = user.getRole().getRoleName();
+        if ("SUPER_ADMIN".equals(roleName)) {
+            return;
+        }
+        if ("DISTRICT_ADMIN".equals(roleName)) {
+            if (user.getDistrictId() != null && assessment.getDistrict() != null && 
+                user.getDistrictId().equals(assessment.getDistrict().getDistrictId())) {
+                return;
+            }
+        }
+        if ("FIELD_ENGINEER".equals(roleName)) {
+            if (assessment.getEngineer() != null && assessment.getEngineer().getUserId().equals(user.getUserId())) {
+                return;
+            }
+        }
+        throw new org.springframework.security.access.AccessDeniedException("Access is denied");
     }
 
     private AssessmentDetailResponse mapToResponse(FieldAssessment assessment, RwhResult result, RwhRecommendation recommendation) {

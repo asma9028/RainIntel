@@ -1,54 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageHeading from '../../components/common/PageHeading';
 import Button from '../../components/common/Button';
 import AssessmentFilters from '../../components/assessments/AssessmentFilters';
 import AssessmentTable from '../../components/assessments/AssessmentTable';
+import { api } from '../../services/api';
 
 export default function Assessments({ onNewAssessment, onRowClick }) {
-  const initialAssessments = [
-    {
-      id: 'RIN-2026-0483',
-      building: 'Municipal Community Hall',
-      engineer: 'Anita Sharma',
-      status: 'Draft',
-      roofArea: '1,240 sq ft',
-      potential: '-',
-      updated: 'Now',
-    },
-    {
-      id: 'RIN-2026-0482',
-      building: 'Govt. High School, Patamata',
-      engineer: 'Anita Sharma',
-      status: 'Completed',
-      roofArea: '7,200 sq ft',
-      potential: '48,600 L',
-      updated: 'Today',
-    },
-    {
-      id: 'RIN-2026-0481',
-      building: 'Municipal Office, Benz Circle',
-      engineer: 'Rahul Varma',
-      status: 'In review',
-      roofArea: '4,180 sq ft',
-      potential: '32,400 L',
-      updated: 'Today',
-    },
-    {
-      id: 'RIN-2026-0480',
-      building: 'District Library, Moghalrajpuram',
-      engineer: 'Anita Sharma',
-      status: 'Processing',
-      roofArea: '3,870 sq ft',
-      potential: '-',
-      updated: 'Yesterday',
-    },
-  ];
-
+  const [assessments, setAssessments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchAssessments = async () => {
+      try {
+        setLoading(true);
+        const data = await api.assessments.list();
+        const mappedData = data.map((item) => ({
+          id: `RIN-${item.assessmentId}`,
+          building: item.buildingName,
+          engineer: 'Assigned Engineer',
+          status: item.status || 'Processing',
+          roofArea: item.roofAreaSqFt ? `${item.roofAreaSqFt} sq ft` : '-',
+          potential: item.harvestPotentialL ? `${item.harvestPotentialL.toLocaleString()} L` : '-',
+          updated: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Now',
+          raw: item,
+        }));
+        setAssessments(mappedData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load assessments:', err);
+        setError('Failed to load assessments. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAssessments();
+  }, []);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
+
+  const filteredAssessments = assessments.filter(a => 
+    a.building.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    a.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -69,10 +66,26 @@ export default function Assessments({ onNewAssessment, onRowClick }) {
         timeFilter="This month"
       />
 
-      <AssessmentTable
-        assessments={initialAssessments}
-        onRowClick={onRowClick}
-      />
+      {error ? (
+        <div style={{ padding: '20px', color: 'red', background: '#fee2e2', borderRadius: '8px' }}>
+          {error}
+        </div>
+      ) : loading ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+          Loading assessments...
+        </div>
+      ) : assessments.length === 0 ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+          No assessments found. Create one to get started.
+        </div>
+      ) : (
+        <AssessmentTable
+          assessments={filteredAssessments}
+          onRowClick={(a) => {
+            if (onRowClick) onRowClick(a);
+          }}
+        />
+      )}
     </>
   );
 }

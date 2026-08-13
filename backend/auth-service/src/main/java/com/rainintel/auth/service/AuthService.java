@@ -32,6 +32,10 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        if (!"FIELD_ENGINEER".equals(request.getRoleName())) {
+            throw new IllegalArgumentException("Registration is only permitted for FIELD_ENGINEER role");
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email is already registered");
         }

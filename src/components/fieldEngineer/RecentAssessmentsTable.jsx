@@ -4,12 +4,16 @@ import StatusBadge from '../common/StatusBadge';
 import LucideIcon from '../common/LucideIcon';
 
 export default function RecentAssessmentsTable({ assessments }) {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isFieldEngineer = user?.role === 'FIELD_ENGINEER';
+
   return (
     <Card className="assessments">
       <div className="card-title">
         <div>
           <h3>Recent assessments</h3>
-          <p>Latest activity across your district</p>
+          <p>{isFieldEngineer ? 'Recent Field Activity' : 'Latest activity across your district'}</p>
         </div>
         <a href="#" onClick={(e) => e.preventDefault()}>
           View all <LucideIcon name="arrow-up-right" />

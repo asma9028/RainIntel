@@ -2,6 +2,7 @@ package com.rainintel.business.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "RWH_RECOMMENDATIONS")
@@ -19,6 +20,7 @@ public class RwhRecommendation {
     @Column(name = "SYSTEM_TYPE", length = 150)
     private String systemType;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "STORAGE_CAPACITY_L")
     private Double storageCapacityL;
 
@@ -28,6 +30,7 @@ public class RwhRecommendation {
     @Column(name = "FILTER_TYPE", length = 150)
     private String filterType;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "CONFIDENCE_SCORE")
     private Double confidenceScore;
 

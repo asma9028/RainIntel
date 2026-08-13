@@ -1,15 +1,20 @@
 import React from 'react';
+import LucideIcon from '../../components/common/LucideIcon';
 import PageHeading from '../../components/common/PageHeading';
 import Button from '../../components/common/Button';
 import ReportSummary from '../../components/reportPreview/ReportSummary';
 import ReportDetails from '../../components/reportPreview/ReportDetails';
 import ReportMetrics from '../../components/reportPreview/ReportMetrics';
 
-export default function ReportPreview({ report, onPrint, onDownload }) {
+export default function ReportPreview({ report, onPrint, onDownload, onBack }) {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const name = user?.fullName || user?.username || 'Guest';
+
   const defaultReport = {
     id: 'RIN-2026-0483',
     building: 'Municipal Community Hall',
-    engineer: 'Anita Sharma',
+    engineer: name,
     district: 'Vijayawada District',
     potential: '118,400 litres',
     recommendation: 'Install a hybrid 15,000 L storage system with a dual-media filter and recharge pit. This design provides strong reliability during monsoon peaks and contributes 47,360 L annually to groundwater recharge.',
@@ -19,6 +24,12 @@ export default function ReportPreview({ report, onPrint, onDownload }) {
 
   return (
     <>
+      <div style={{ paddingBottom: '16px' }}>
+        <button className="back" onClick={onBack}>
+          <LucideIcon name="arrow-left" />
+          Back to Reports
+        </button>
+      </div>
       <PageHeading
         title="Report preview"
         subtitle={`Government assessment report — ${data.id}`}

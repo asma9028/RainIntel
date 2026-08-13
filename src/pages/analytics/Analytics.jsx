@@ -12,6 +12,7 @@ import { api } from '../../services/api';
 export default function Analytics({ onExport }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     async function fetchSummary() {
@@ -20,6 +21,7 @@ export default function Analytics({ onExport }) {
         setSummary(data);
       } catch (err) {
         console.error('Failed to load analytics summary', err);
+        setErrorMsg('Unable to retrieve analytics summary.');
       } finally {
         setLoading(false);
       }
@@ -27,10 +29,52 @@ export default function Analytics({ onExport }) {
     fetchSummary();
   }, []);
 
-  const totalHarvest = summary ? (summary.totalHarvestedLiters / 1000000.0).toFixed(2) : '45.8';
-  const totalAssessments = summary ? summary.totalAssessments : '1,284';
-  const avgConf = summary ? summary.averageConfidence : '96.2';
-  const rechargePotential = summary ? (summary.totalHarvestedLiters * 0.4 / 1000000.0).toFixed(2) : '18.2';
+  if (loading) {
+    return (
+      <>
+        <PageHeading
+          title="Analytics"
+          subtitle="Executive intelligence for your district."
+        />
+        <div style={{ display: 'grid', placeItems: 'center', height: '400px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+          <span>Loading analytics data...</span>
+        </div>
+      </>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <>
+        <PageHeading
+          title="Analytics"
+          subtitle="Executive intelligence for your district."
+        />
+        <div style={{ display: 'grid', placeItems: 'center', height: '400px', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fca5a5', color: '#991b1b' }}>
+          <span>{errorMsg}</span>
+        </div>
+      </>
+    );
+  }
+
+  if (!summary || summary.totalAssessments === 0) {
+    return (
+      <>
+        <PageHeading
+          title="Analytics"
+          subtitle="Executive intelligence for your district."
+        />
+        <div style={{ display: 'grid', placeItems: 'center', height: '400px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+          <span>No analytics data available for the current period.</span>
+        </div>
+      </>
+    );
+  }
+
+  const totalHarvest = (summary.totalHarvestedLiters / 1000000.0).toFixed(2);
+  const totalAssessments = summary.totalAssessments;
+  const avgConf = summary.averageConfidence;
+  const rechargePotential = (summary.totalHarvestedLiters * 0.4 / 1000000.0).toFixed(2);
 
   const kpis = [
     {
@@ -43,14 +87,14 @@ export default function Analytics({ onExport }) {
     },
     {
       title: 'Avg. assessment time',
-      value: '38',
-      valueUnit: ' min',
+      value: 'N/A', // Not supported by current API
+      valueUnit: '',
       icon: 'timer',
       iconColor: 'blue',
-      subtitle: '18% faster than target',
+      subtitle: 'Depends on field agent activity',
     },
     {
-      title: 'AI confidence',
+      title: 'Analysis confidence',
       value: String(avgConf),
       valueUnit: '%',
       icon: 'circle-check',
@@ -80,7 +124,7 @@ export default function Analytics({ onExport }) {
       />
 
       <AnalyticsFilters
-        districtFilter="Vijayawada"
+        districtFilter="All Districts"
         periodFilter="This year"
       />
 

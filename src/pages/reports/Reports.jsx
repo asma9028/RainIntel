@@ -78,9 +78,10 @@ export default function Reports({ onExport, onReportSelect }) {
                 id: rep.id,
                 building: rep.building,
                 engineer: rep.engineer,
-                district: `${a.districtName || 'Coimbatore'} District`,
+                district: a.districtName ? `${a.districtName} District` : 'District Unknown',
                 potential: `${Math.round(a.harvestPotentialL || 0).toLocaleString()} litres`,
-                recommendation: a.recommendationReason || `Install a ${a.systemType || 'Hybrid'} system. Recommended storage is ${Math.round(a.storageCapacityL || 0).toLocaleString()} L with a ${a.filterType || 'filter'} and ${a.rechargeType || 'recharge type'}.`
+                recommendation: a.recommendationReason || (a.systemType ? `Install a ${a.systemType} system. Recommended storage is ${Math.round(a.storageCapacityL || 0).toLocaleString()} L with a ${a.filterType || 'filter'} and ${a.rechargeType || 'recharge type'}.` : 'No recommendation data generated on backend.'),
+                raw: a
               });
             }
           }}

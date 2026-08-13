@@ -11,12 +11,10 @@ print("=" * 70)
 
 password = getpass.getpass("Enter RAININTEL password: ")
 
-import os
-
 connection = oracledb.connect(
     user="RAININTEL",
     password=password,
-    dsn=os.environ.get("ORACLE_DSN", "127.0.0.1:1521/xe")
+    dsn="localhost:1521/XEPDB1"
 )
 
 

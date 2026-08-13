@@ -1,18 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 
 export default function SettingsPreferences() {
-  const [language, setLanguage] = useState('English (India)');
-  const [units, setUnits] = useState('Metric');
-  const [mapStyle, setMapStyle] = useState('Standard');
-  const [layout, setLayout] = useState('Executive overview');
-  const [compact, setCompact] = useState(false);
+  const [language, setLanguage] = useState(
+    localStorage.getItem('pref_language') || 'English (India)'
+  );
+  const [units, setUnits] = useState(
+    localStorage.getItem('pref_units') || 'Metric'
+  );
+  const [mapStyle, setMapStyle] = useState(
+    localStorage.getItem('pref_mapStyle') || 'Standard'
+  );
+  const [layout, setLayout] = useState(
+    localStorage.getItem('pref_layout') || 'Executive overview'
+  );
+  const [compact, setCompact] = useState(
+    localStorage.getItem('pref_compact') === 'true'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('pref_language', language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('pref_units', units);
+  }, [units]);
+
+  useEffect(() => {
+    localStorage.setItem('pref_mapStyle', mapStyle);
+  }, [mapStyle]);
+
+  useEffect(() => {
+    localStorage.setItem('pref_layout', layout);
+  }, [layout]);
+
+  useEffect(() => {
+    localStorage.setItem('pref_compact', compact);
+  }, [compact]);
 
   return (
     <>
       <Card className="setting-group">
         <h3>Workspace preferences</h3>
-        <p>Set defaults for data entry, maps, and dashboard displays.</p>
+        <p>Set defaults for data entry, maps, and dashboard displays. <i>(Saved on this device)</i></p>
         <div className="form-grid">
           <label>
             Language
@@ -49,7 +79,7 @@ export default function SettingsPreferences() {
 
       <Card className="setting-group">
         <h3>Data display</h3>
-        <p>Choose how information appears across your workspace.</p>
+        <p>Choose how information appears across your workspace. <i>(Saved on this device)</i></p>
         <div className="toggle-row">
           <div>
             <b>Compact tables</b>

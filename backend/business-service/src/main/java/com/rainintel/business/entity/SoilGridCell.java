@@ -1,6 +1,7 @@
 package com.rainintel.business.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "SOIL_GRID_CELLS")
@@ -16,9 +17,11 @@ public class SoilGridCell {
     @Column(name = "GRID_COLUMN", nullable = false)
     private Integer gridColumn;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "X_COORDINATE", nullable = false)
     private Double xCoordinate;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "Y_COORDINATE", nullable = false)
     private Double yCoordinate;
 

@@ -35,17 +35,21 @@ public class AssessmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AssessmentDetailResponse> getAssessmentDetails(@PathVariable Long id) {
-        return ResponseEntity.ok(assessmentService.getAssessmentDetails(id));
+    public ResponseEntity<AssessmentDetailResponse> getAssessmentDetails(@PathVariable Long id,
+                                                                         Authentication authentication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(assessmentService.getAssessmentDetails(id, username));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<AssessmentDetailResponse> updateStatus(@PathVariable Long id,
-                                                                  @RequestBody Map<String, String> body) {
+                                                                  @RequestBody Map<String, String> body,
+                                                                  Authentication authentication) {
         String status = body.get("status");
         if (status == null || status.trim().isEmpty()) {
             throw new IllegalArgumentException("Status field is required");
         }
-        return ResponseEntity.ok(assessmentService.updateStatus(id, status));
+        String username = authentication.getName();
+        return ResponseEntity.ok(assessmentService.updateStatus(id, status, username));
     }
 }

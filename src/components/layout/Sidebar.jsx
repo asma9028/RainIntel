@@ -6,18 +6,39 @@ export default function Sidebar({ currentPage, onPageChange, triggerToast }) {
   const [showWorkspace, setShowWorkspace] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isFieldEngineer = user?.role === 'FIELD_ENGINEER';
+
   const primaryNavItems = [
     { name: 'Dashboard', icon: 'layout-dashboard' },
     { name: 'Assessments', icon: 'clipboard-check', pill: 12 },
     { name: 'GIS Intelligence', icon: 'map' },
     { name: 'Reports', icon: 'file-bar-chart' },
-    { name: 'Analytics', icon: 'chart-no-axes-combined' },
+    ...(isFieldEngineer ? [] : [{ name: 'Analytics', icon: 'chart-no-axes-combined' }]),
   ];
 
   const systemNavItems = [
     { name: 'Settings', icon: 'settings-2' },
     { name: 'Support', icon: 'circle-help' },
   ];
+
+  const displayName = user?.fullName || user?.username || user?.email || 'Guest';
+  
+  let formattedRole = 'Guest';
+  if (user?.role) {
+    formattedRole = user.role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  } else if (user) {
+    formattedRole = 'User';
+  }
+
+  const getInitials = (name) => {
+    if (!name || name === 'Guest') return 'GU';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  };
+  const initials = getInitials(displayName);
 
   return (
     <aside className="sidebar">
@@ -158,10 +179,10 @@ export default function Sidebar({ currentPage, onPageChange, triggerToast }) {
         )}
 
         <div className="user-card" style={{ cursor: 'pointer' }} onClick={() => setShowProfileMenu(!showProfileMenu)}>
-          <Avatar initials="AS" />
+          <Avatar initials={initials} />
           <div>
-            <b>Anita Sharma</b>
-            <small>Field Engineer</small>
+            <b>{displayName}</b>
+            <small>{formattedRole}</small>
           </div>
           <LucideIcon name="more-horizontal" />
         </div>

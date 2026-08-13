@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PageHeading from '../../components/common/PageHeading';
 import Button from '../../components/common/Button';
 import GisFilters from '../../components/gis/GisFilters';
@@ -13,24 +13,34 @@ export default function GisIntelligence({ onNewAssessment, triggerToast }) {
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [districtFilter, setDistrictFilter] = useState('All');
 
   useEffect(() => {
     async function loadGisData() {
       try {
         const res = await api.assessments.list();
-        const mapped = res.map((a, i) => {
-          const pinClasses = ['one', 'two', 'three'];
-          // Spread locations across the stylized map layout
-          const leftVal = 15 + ((a.longitude * 12345) % 70);
-          const topVal = 15 + ((a.latitude * 54321) % 65);
+        
+        const validAssessments = res.filter(a => 
+          typeof a.latitude === 'number' && typeof a.longitude === 'number' &&
+          !isNaN(a.latitude) && !isNaN(a.longitude) &&
+          a.latitude >= -90 && a.latitude <= 90 &&
+          a.longitude >= -180 && a.longitude <= 180
+        );
+
+        const mapped = validAssessments.map(a => {
           return {
             id: String(a.assessmentId),
             buildingName: a.buildingName,
-            details: `Roof area ${a.roofAreaSqFt.toLocaleString()} sq ft · Potential ${a.harvestPotentialL ? Math.round(a.harvestPotentialL).toLocaleString() : 0} L`,
+            details: `Roof area ${a.roofAreaSqFt ? a.roofAreaSqFt.toLocaleString() : 0} sq ft · Potential ${a.harvestPotentialL ? Math.round(a.harvestPotentialL).toLocaleString() : 0} L`,
+            statusRaw: a.status,
+            districtName: a.districtName || 'Unknown',
             status: a.status === 'APPROVED' ? 'Completed' : a.status === 'SUBMITTED' ? 'In review' : 'Processing',
-            pinClass: pinClasses[i % 3],
-            left: `${leftVal}%`,
-            top: `${topVal}%`
+            latitude: a.latitude,
+            longitude: a.longitude,
+            roofAreaSqFt: a.roofAreaSqFt,
+            harvestPotentialL: a.harvestPotentialL,
+            rechargePotentialL: a.rechargePotentialL
           };
         });
         setLocations(mapped);
@@ -46,21 +56,30 @@ export default function GisIntelligence({ onNewAssessment, triggerToast }) {
     loadGisData();
   }, [triggerToast]);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  const filteredLocations = useMemo(() => {
+    return locations.filter(loc => {
+      const matchSearch = loc.buildingName.toLowerCase().includes(searchQuery.toLowerCase()) || loc.id.includes(searchQuery);
+      const matchStatus = statusFilter === 'All' || loc.statusRaw === statusFilter || loc.status === statusFilter;
+      const matchDistrict = districtFilter === 'All' || loc.districtName === districtFilter;
+      return matchSearch && matchStatus && matchDistrict;
+    });
+  }, [locations, searchQuery, statusFilter, districtFilter]);
 
-  const handleLocationSelect = (loc) => {
-    setSelectedLocation(loc);
-  };
+  // Synchronize selection cleanly after filtering
+  useEffect(() => {
+    if (filteredLocations.length > 0 && (!selectedLocation || !filteredLocations.find(l => l.id === selectedLocation.id))) {
+      setSelectedLocation(filteredLocations[0]);
+    } else if (filteredLocations.length === 0) {
+      setSelectedLocation(null);
+    }
+  }, [filteredLocations, selectedLocation]);
+
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
+  const handleLocationSelect = (loc) => setSelectedLocation(loc);
 
   const pageActions = (
     <>
-      <Button
-        variant="secondary"
-        icon="layers"
-        onClick={() => triggerToast && triggerToast('Changing map layers...')}
-      >
+      <Button variant="secondary" icon="layers" onClick={() => triggerToast && triggerToast('Layers currently disabled / unavailable')}>
         Layers
       </Button>
       <Button variant="primary" icon="plus" onClick={onNewAssessment}>
@@ -71,29 +90,29 @@ export default function GisIntelligence({ onNewAssessment, triggerToast }) {
 
   return (
     <>
-      <PageHeading
-        title="GIS intelligence"
-        subtitle="Explore assessment coverage and water potential across Vijayawada."
-        actions={pageActions}
-      />
+      <PageHeading title="GIS intelligence" subtitle="Explore assessment coverage and water potential." actions={pageActions} />
 
-      <GisFilters
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        districtFilter="Vijayawada"
-        statusFilter="All"
-      />
+      {/* Basic frontend filtering structure. Extend UI visually inside GisFilters component if dropdowns exist */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+         <input 
+            placeholder="Search site or ID..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', minWidth: '240px' }}
+         />
+         <select onChange={(e) => setStatusFilter(e.target.value)} value={statusFilter} style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
+            <option value="All">All Statuses</option>
+            <option value="Completed">Completed</option>
+            <option value="In review">In review</option>
+         </select>
+      </div>
 
       {loading ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '550px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '13px' }}>
           <span>Loading GIS locations...</span>
         </div>
       ) : (
-        <GisMap
-          locations={locations}
-          selectedLocation={selectedLocation}
-          onLocationSelect={handleLocationSelect}
-        >
+        <GisMap locations={filteredLocations} selectedLocation={selectedLocation} onLocationSelect={handleLocationSelect}>
           <GisMapControls
             onZoomIn={() => triggerToast && triggerToast('Zooming in GIS map...')}
             onZoomOut={() => triggerToast && triggerToast('Zooming out GIS map...')}

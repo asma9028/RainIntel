@@ -3,9 +3,9 @@ import LucideIcon from '../../components/common/LucideIcon';
 import Button from '../../components/common/Button';
 import { api } from '../../services/api';
 
-export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('anita.sharma@jalshakti.gov.in');
-  const [password, setPassword] = useState('<REMOVED_SECRET>');
+export default function Login({ onLogin, onRegister, triggerToast }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +41,7 @@ export default function Login({ onLogin }) {
         <div className="login-badges">
           <span><b>1,284</b><br />Buildings assessed</span>
           <span><b>45.8M L</b><br />Water potential</span>
-          <span><b>96.2%</b><br />AI confidence</span>
+          <span><b>96.2%</b><br />Analysis confidence</span>
         </div>
       </section>
 
@@ -90,7 +90,7 @@ export default function Login({ onLogin }) {
             </label>
             <div className="remember">
               <span>☑ Remember me</span>
-              <a href="#" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); if (triggerToast) triggerToast('Password reset currently unavailable. Contact district dispatch.', 'circle-alert'); }}>Forgot password?</a>
             </div>
             <Button
               type="submit"
@@ -101,6 +101,9 @@ export default function Login({ onLogin }) {
             >
               {loading ? "Signing in..." : "Sign in to workspace"}
             </Button>
+            <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '12px' }}>
+              <span>Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); if(onRegister) onRegister(); }} style={{ fontWeight: 600, color: '#0f766e' }}>Register</a></span>
+            </div>
           </form>
           <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '10px' }}>Powered by Ministry of Jal Shakti</p>
         </article>

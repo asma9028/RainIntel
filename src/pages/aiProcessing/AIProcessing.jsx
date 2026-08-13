@@ -8,8 +8,8 @@ export default function AIProcessing({ onViewResults }) {
   return (
     <div className="processing">
       <PageHeading
-        title="AI assessment in progress"
-        subtitle="Our intelligence engine is generating your rooftop recommendation."
+        title="Assessment successfully calculated"
+        subtitle="Our calculation engine has determined your optimal rooftop recommendation."
       />
       <AIProcessingProgress />
       <AIProcessingSteps />

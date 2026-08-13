@@ -2,6 +2,7 @@ package com.rainintel.business.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "RAINFALL_RECORDS")
@@ -19,12 +20,15 @@ public class RainfallRecord {
     @Column(name = "OBSERVATION_DATE", nullable = false)
     private LocalDate observationDate;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "ACTUAL_MM")
     private Double actualMm;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "NORMAL_MM")
     private Double normalMm;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPARTURE_PERCENT")
     private Double departurePercent;
 

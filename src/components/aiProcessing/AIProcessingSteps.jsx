@@ -2,12 +2,14 @@ import React from 'react';
 
 export default function AIProcessingSteps({ steps }) {
   const defaultSteps = [
-    { name: 'Fetching rainfall data', isComplete: true, isPending: false },
-    { name: 'GIS mapping and rooftop detection', isComplete: true, isPending: false },
-    { name: 'Calculating harvest potential', isComplete: true, isPending: false },
-    { name: 'Recharge analysis', isComplete: true, isPending: false },
-    { name: 'Machine-learning recommendation', isComplete: false, isPending: false },
-    { name: 'Generating government report', isComplete: false, isPending: true },
+    { name: '1. Assessment submitted', isComplete: true, isPending: false },
+    { name: '2. GIS/location data evaluated', isComplete: true, isPending: false },
+    { name: '3. Rainfall data evaluated', isComplete: true, isPending: false },
+    { name: '4. Harvest potential calculated', isComplete: true, isPending: false },
+    { name: '5. Recharge potential calculated', isComplete: true, isPending: false },
+    { name: '6. Storage requirement calculated', isComplete: true, isPending: false },
+    { name: '7. RWH recommendation generated', isComplete: true, isPending: false },
+    { name: '8. Assessment results ready', isComplete: true, isPending: false },
   ];
 
   const list = steps || defaultSteps;

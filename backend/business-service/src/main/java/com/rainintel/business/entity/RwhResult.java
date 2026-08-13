@@ -2,6 +2,7 @@ package com.rainintel.business.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "RWH_RESULTS")
@@ -16,18 +17,23 @@ public class RwhResult {
     @JoinColumn(name = "ASSESSMENT_ID", nullable = false, unique = true)
     private FieldAssessment assessment;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "ANNUAL_RAINFALL_MM")
     private Double annualRainfallMm;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "RUNOFF_COEFFICIENT")
     private Double runoffCoefficient;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "HARVESTABLE_WATER_L")
     private Double harvestableWaterL;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "RECHARGE_POTENTIAL_L")
     private Double rechargePotentialL;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "RECOMMENDED_STORAGE_L")
     private Double recommendedStorageL;
 

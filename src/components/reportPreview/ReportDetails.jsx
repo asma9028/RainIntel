@@ -1,6 +1,10 @@
 import React from 'react';
 
-export default function ReportDetails({ building = 'Municipal Community Hall', id = 'RIN-2026-0483', engineer = 'Anita Sharma' }) {
+export default function ReportDetails({ building = 'Municipal Community Hall', id = 'RIN-2026-0483', engineer }) {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const displayEngineer = engineer || user?.fullName || user?.username || 'Guest';
+
   return (
     <div className="report-section">
       <h4>BUILDING INFORMATION</h4>
@@ -15,7 +19,7 @@ export default function ReportDetails({ building = 'Municipal Community Hall', i
         </div>
         <div className="summary-item">
           <small>Engineer</small>
-          <b>{engineer}</b>
+          <b>{displayEngineer}</b>
         </div>
       </div>
     </div>

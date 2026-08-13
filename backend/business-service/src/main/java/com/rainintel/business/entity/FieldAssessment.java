@@ -2,6 +2,7 @@ package com.rainintel.business.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "FIELD_ASSESSMENTS")
@@ -20,9 +21,11 @@ public class FieldAssessment {
     @JoinColumn(name = "DISTRICT_ID", nullable = false)
     private District district;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "LATITUDE", nullable = false)
     private Double latitude;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "LONGITUDE", nullable = false)
     private Double longitude;
 
@@ -32,15 +35,18 @@ public class FieldAssessment {
     @Column(name = "BUILDING_TYPE", length = 100)
     private String buildingType;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "ROOF_AREA_M2")
     private Double roofAreaM2;
 
     @Column(name = "ROOF_MATERIAL", length = 100)
     private String roofMaterial;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "ROOF_SLOPE")
     private Double roofSlope;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "WATER_DEMAND_LPD")
     private Double waterDemandLpd;
 

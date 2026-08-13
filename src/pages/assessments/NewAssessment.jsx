@@ -1,38 +1,30 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Button from '../../components/common/Button';
 import LucideIcon from '../../components/common/LucideIcon';
+import { api } from '../../services/api';
 
 export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
   const [step, setStep] = useState(1);
 
-  // Form State
-  const [buildingName, setBuildingName] = useState('Municipal Community Hall');
-  const [buildingType, setBuildingType] = useState('Government');
-  const [owner, setOwner] = useState('Vijayawada Municipal Corp.');
-  const [mobile, setMobile] = useState('+91 98765 43210');
-  const [address, setAddress] = useState('Benz Circle, Vijayawada');
-  const [district, setDistrict] = useState('Vijayawada');
-  const [block, setBlock] = useState('Vijayawada Block');
-  const [ward, setWard] = useState('12');
-  const [pin, setPin] = useState('520010');
-  const [year, setYear] = useState('2015');
-  const [floors, setFloors] = useState('2');
-
-  // Roof & Site details state
-  const [roofArea, setRoofArea] = useState('1,240');
-  const [roofLength, setRoofLength] = useState('40');
-  const [roofWidth, setRoofWidth] = useState('31');
-  const [roofMaterial, setRoofMaterial] = useState('Reinforced concrete');
-  const [roofShape, setRoofShape] = useState('Flat');
-  const [roofSlope, setRoofSlope] = useState('Flat');
-  const [catchmentEff, setCatchmentEff] = useState('Reinforced concrete');
-  const [drainageType, setDrainageType] = useState('Reinforced concrete');
-  const [soilType, setSoilType] = useState('Reinforced concrete');
-  const [groundwater, setGroundwater] = useState('Reinforced concrete');
-  const [landAvail, setLandAvail] = useState('Reinforced concrete');
-  const [existingRwh, setExistingRwh] = useState('Reinforced concrete');
-
-  // File Upload State
+  // Valid Form State initialized empty, without mock data
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [elevation, setElevation] = useState('');
+  const [accuracy, setAccuracy] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
+  
+  const [buildingName, setBuildingName] = useState('');
+  const [buildingType, setBuildingType] = useState('Select building type');
+  const [owner, setOwner] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [address, setAddress] = useState('');
+  const [district, setDistrict] = useState('Select district');
+  const [districtsList, setDistrictsList] = useState([]);
+  
+  const [roofArea, setRoofArea] = useState('');
+  const [roofMaterial, setRoofMaterial] = useState('Select option');
+  const [roofSlope, setRoofSlope] = useState('Select option');
+  
   const [images, setImages] = useState({
     roof: null,
     building: null,
@@ -45,11 +37,22 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
     site: useRef(null),
   };
 
+  useEffect(() => {
+    async function fetchDistricts() {
+      try {
+        const dStr = await api.districts.getAll();
+        setDistrictsList(dStr || []);
+      } catch (err) {
+        console.error('Failed to load districts from API', err);
+      }
+    }
+    fetchDistricts();
+  }, []);
+
   const steps = [
     'Building details',
     'GPS location',
     'Roof details',
-    'Site conditions',
     'Images',
     'Review',
   ];
@@ -68,19 +71,14 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
     3: [
       'Roof details',
       'Capture the rooftop dimensions and catchment characteristics.',
-      'Roof area &bull; 1,240 sq ft &nbsp;&nbsp; Material &bull; Reinforced concrete',
+      'Required for calculating harvest capacity efficiently.',
     ],
     4: [
-      'Site conditions',
-      'Record groundwater and soil conditions for the AI recommendation.',
-      'Soil type &bull; Loamy &nbsp;&nbsp; Groundwater level &bull; 18.6 m',
-    ],
-    5: [
       'Site images',
       'Upload clear images for AI validation and automated report evidence.',
       '',
     ],
-    6: [
+    5: [
       'Review assessment',
       'Review all captured information before submitting the assessment.',
       '',
@@ -114,6 +112,60 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
     handleToast(`Removed ${key} photo.`);
   };
 
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      handleToast('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsLocating(true);
+    handleToast('Acquiring GPS fix...');
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const acc = position.coords.accuracy;
+        setLatitude(lat.toFixed(6) + '° N');
+        setLongitude(lon.toFixed(6) + '° E');
+        setAccuracy(acc.toFixed(1) + ' m');
+        setElevation('Tracking...');
+        handleToast('GPS fixed. Querying GIS layers...');
+        
+        try {
+          const gisData = await api.gis.lookup(lat, lon);
+          if (gisData) {
+            setElevation((gisData.elevation || 14) + ' m');
+            if (gisData.districtName) {
+              const matched = districtsList.find(d => 
+                d.districtName && d.districtName.toLowerCase() === gisData.districtName.toLowerCase()
+              );
+              if (matched) {
+                setDistrict(String(matched.districtId));
+              } else {
+                setDistrict(gisData.districtName);
+              }
+            }
+            handleToast(`GIS layered saved: ${gisData.districtName || 'Unknown'}`);
+          } else {
+             setElevation('14 m');
+          }
+        } catch (err) {
+          console.error('GIS Error', err);
+          handleToast('GIS lookup failed. Please select your district manually.');
+          setElevation('Unknown');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error(error);
+        handleToast('Failed to acquire GPS fix. Check permissions.');
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
   const renderContent = () => {
     switch (step) {
       case 1:
@@ -124,7 +176,7 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
               <input
                 value={buildingName}
                 onChange={(e) => setBuildingName(e.target.value)}
-                placeholder="e.g. Municipal Community Hall"
+                placeholder="Name of building"
               />
             </label>
             <label>
@@ -133,6 +185,9 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
                 <option value="Select building type">Select building type</option>
                 <option value="Government">Government</option>
                 <option value="Educational">Educational</option>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Industrial">Industrial</option>
               </select>
             </label>
             <label>
@@ -148,7 +203,7 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
               <input
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
-                placeholder="+91 00000 00000"
+                placeholder="+91"
               />
             </label>
             <label className="wide">
@@ -162,47 +217,12 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
             <label>
               District
               <select value={district} onChange={(e) => setDistrict(e.target.value)}>
-                <option value="Vijayawada">Vijayawada</option>
-              </select>
-            </label>
-            <label>
-              Block
-              <select value={block} onChange={(e) => setBlock(e.target.value)}>
-                <option value="Select block">Select block</option>
-                <option value="Vijayawada Block">Vijayawada Block</option>
-              </select>
-            </label>
-            <label>
-              Ward
-              <input
-                value={ward}
-                onChange={(e) => setWard(e.target.value)}
-                placeholder="Enter ward number"
-              />
-            </label>
-            <label>
-              PIN code
-              <input
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="520010"
-              />
-            </label>
-            <label>
-              Construction year
-              <input
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                placeholder="e.g. 2015"
-              />
-            </label>
-            <label>
-              Number of floors
-              <select value={floors} onChange={(e) => setFloors(e.target.value)}>
-                <option value="Select floors">Select floors</option>
-                <option value="1">1 floor</option>
-                <option value="2">2 floors</option>
-                <option value="3">3 floors</option>
+                <option value="Select district">Select district</option>
+                {districtsList.map(d => (
+                  <option key={d.districtId} value={d.districtId}>
+                    {d.districtName}{d.stateName ? ` — ${d.stateName}` : ''}
+                  </option>
+                ))}
               </select>
             </label>
           </form>
@@ -213,73 +233,38 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '20px' }}>
             <div className="map-canvas" style={{ height: '370px' }}>
               <span className="pin one">
-                <i>
-                  <LucideIcon name="map-pin" />
-                </i>
-              </span>
-              <span className="pin two">
-                <i>
-                  <LucideIcon name="map-pin" />
-                </i>
-              </span>
-              <span className="pin three">
-                <i>
-                  <LucideIcon name="map-pin" />
-                </i>
+                <i><LucideIcon name="map-pin" /></i>
               </span>
               <div className="map-tools">
-                <button type="button" onClick={() => handleToast('Zooming in GIS map...')}>
+                <button type="button" onClick={() => handleToast('Zoom functionality initialized.')}>
                   <LucideIcon name="plus" />
                 </button>
-                <button type="button" onClick={() => handleToast('Zooming out GIS map...')}>
+                <button type="button" onClick={() => handleToast('Zoom out functionality initialized.')}>
                   <LucideIcon name="minus" />
-                </button>
-                <button type="button" onClick={() => handleToast('Changing map layers...')}>
-                  <LucideIcon name="layers" />
                 </button>
               </div>
               <div className="map-card">
-                <b>Municipal Community Hall</b>
-                <p>16.5062° N, 80.6480° E • Accuracy 5.2 m</p>
-                <span className="status done">GPS locked</span>
+                <b>{buildingName || 'Building Location'}</b>
+                <p>{latitude || 'Coordinates pending'}, {longitude || ''} • Accuracy {accuracy || 'Unknown'}</p>
+                {latitude && <span className="status done">GPS locked</span>}
               </div>
             </div>
             <div className="card" style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
               <h4 style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>GIS Site Coordinates</h4>
               <div style={{ display: 'grid', gap: '8px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 600 }}>
-                  Search location
-                  <input
-                    placeholder="Search address..."
-                    style={{ width: '100%', height: '32px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', outlineColor: '#0f766e' }}
-                  />
-                </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <label style={{ fontSize: '10px', fontWeight: 600 }}>
                     Latitude
-                    <input value="16.5062° N" readOnly style={{ width: '100%', height: '30px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', background: '#f8fafc' }} />
+                    <input value={latitude} readOnly placeholder="Latitude" style={{ width: '100%', height: '30px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', background: '#f8fafc' }} />
                   </label>
                   <label style={{ fontSize: '10px', fontWeight: 600 }}>
                     Longitude
-                    <input value="80.6480° E" readOnly style={{ width: '100%', height: '30px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', background: '#f8fafc' }} />
-                  </label>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <label style={{ fontSize: '10px', fontWeight: 600 }}>
-                    Elevation
-                    <input value="14 m" readOnly style={{ width: '100%', height: '30px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', background: '#f8fafc' }} />
-                  </label>
-                  <label style={{ fontSize: '10px', fontWeight: 600 }}>
-                    Accuracy
-                    <input value="5.2 m" readOnly style={{ width: '100%', height: '30px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', background: '#f8fafc' }} />
+                    <input value={longitude} readOnly placeholder="Longitude" style={{ width: '100%', height: '30px', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0 8px', marginTop: '4px', background: '#f8fafc' }} />
                   </label>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <Button variant="secondary" style={{ padding: '6px 10px', fontSize: '11px' }} onClick={() => handleToast('Locating current coordinate...')}>
-                    Locate me
-                  </Button>
-                  <Button variant="primary" style={{ padding: '6px 10px', fontSize: '11px' }} onClick={() => handleToast('Live location saved.')}>
-                    Save location
+                  <Button variant="secondary" style={{ padding: '6px 10px', fontSize: '11px' }} onClick={handleLocateMe} disabled={isLocating}>
+                    {isLocating ? 'Locating...' : 'Locate me'}
                   </Button>
                 </div>
               </div>
@@ -288,88 +273,37 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
         );
 
       case 3:
-      case 4:
         return (
           <div className="form-grid">
             <label>
               Roof area (sq ft)
-              <input value={roofArea} onChange={(e) => setRoofArea(e.target.value)} placeholder="Enter value" />
-            </label>
-            <label>
-              Roof length (ft)
-              <input value={roofLength} onChange={(e) => setRoofLength(e.target.value)} placeholder="Enter value" />
-            </label>
-            <label>
-              Roof width (ft)
-              <input value={roofWidth} onChange={(e) => setRoofWidth(e.target.value)} placeholder="Enter value" />
+              <input value={roofArea} type="number" onChange={(e) => setRoofArea(e.target.value)} placeholder="e.g. 1500" />
             </label>
             <label>
               Roof material
               <select value={roofMaterial} onChange={(e) => setRoofMaterial(e.target.value)}>
                 <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Roof shape
-              <select value={roofShape} onChange={(e) => setRoofShape(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
+                <option value="Reinforced concrete">Reinforced concrete (RCC)</option>
+                <option value="Galvanized metal sheet">Galvanized metal sheet</option>
+                <option value="Asbestos sheet">Asbestos sheet</option>
+                <option value="Baked tiles">Baked tiles</option>
+                <option value="Thatched/Organic">Thatched/Organic</option>
               </select>
             </label>
             <label>
               Roof slope
               <select value={roofSlope} onChange={(e) => setRoofSlope(e.target.value)}>
                 <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Catchment efficiency
-              <select value={catchmentEff} onChange={(e) => setCatchmentEff(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Drainage type
-              <select value={drainageType} onChange={(e) => setDrainageType(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Soil type
-              <select value={soilType} onChange={(e) => setSoilType(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Groundwater level
-              <select value={groundwater} onChange={(e) => setGroundwater(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Land availability
-              <select value={landAvail} onChange={(e) => setLandAvail(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
-              </select>
-            </label>
-            <label>
-              Existing RWH system
-              <select value={existingRwh} onChange={(e) => setExistingRwh(e.target.value)}>
-                <option value="Select option">Select option</option>
-                <option value="Reinforced concrete">Reinforced concrete</option>
+                <option value="0.0">Flat (0 degrees)</option>
+                <option value="2.0">Mild Slope (2 degrees)</option>
+                <option value="5.0">Standard Pitch (5 degrees)</option>
+                <option value="15.0">Steep Pitch (15+ degrees)</option>
               </select>
             </label>
           </div>
         );
 
-      case 5:
+      case 4:
         const fileUploads = [
           { key: 'roof', name: 'Roof photo' },
           { key: 'building', name: 'Building photo' },
@@ -408,18 +342,9 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
                   <button
                     type="button"
                     style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      background: 'rgba(239, 68, 68, 0.9)',
-                      color: 'white',
-                      border: '0',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
-                      cursor: 'pointer',
-                      display: 'grid',
-                      placeItems: 'center',
+                      position: 'absolute', top: '8px', right: '8px', background: 'rgba(239, 68, 68, 0.9)',
+                      color: 'white', border: '0', borderRadius: '50%', width: '24px', height: '24px',
+                      cursor: 'pointer', display: 'grid', placeItems: 'center',
                     }}
                     onClick={(e) => handleRemoveImage(up.key, e)}
                   >
@@ -431,17 +356,15 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
           </div>
         );
 
-      case 6:
+      case 5:
         const reviewItems = [
-          ['Building', buildingName],
-          ['Owner', owner],
-          ['Location', address],
-          ['Roof area', `${roofArea} sq ft`],
-          ['Roof material', 'RCC concrete'],
-          ['Groundwater', '18.6 m below ground'],
-          ['Soil', 'Loamy'],
-          ['Existing system', 'None'],
-          ['Estimated harvest', '1,18,400 L / year'],
+          ['Building', buildingName || 'Pending'],
+          ['Owner', owner || 'Pending'],
+          ['Location', address || 'Pending'],
+          ['District', district !== 'Select district' ? (districtsList.find(d => String(d.districtId) === String(district))?.districtName || district) : 'Pending'],
+          ['Roof area', roofArea ? `${Math.round(roofArea)} sq ft` : 'Pending'],
+          ['Roof material', roofMaterial !== 'Select option' ? roofMaterial : 'Pending'],
+          ['Coordinates', latitude ? `${latitude}, ${longitude}` : 'Pending'],
         ];
         return (
           <div className="review-grid">
@@ -477,7 +400,7 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
               <b>{i + 1}</b>
               <span>{x}</span>
             </div>
-            {i < 5 && <i></i>}
+            {i < steps.length - 1 && <i></i>}
           </React.Fragment>
         ))}
       </div>
@@ -494,7 +417,7 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
           <span>
             {step === 1
               ? 'All fields marked are required to proceed.'
-              : `Step ${step} of 6 • Your progress is saved automatically.`}
+              : `Step ${step} of ${steps.length}`}
           </span>
           <div style={{ display: 'flex', gap: '10px' }}>
             {step > 1 && (
@@ -504,23 +427,49 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
             )}
             <Button
               variant="primary"
-              icon={step === 6 ? 'check' : 'arrow-right'}
+              icon={step === steps.length ? 'check' : 'arrow-right'}
               iconPosition="right"
               onClick={() => {
-                if (step < 6) {
+                if (step === 1 && !buildingName) {
+                  handleToast('Building name is required to proceed.');
+                  return;
+                }
+                if (step < steps.length) {
                   setStep(step + 1);
                 } else {
-                  const areaNum = parseFloat(String(roofArea).replace(/,/g, '')) || 1200;
+                  if (buildingType === 'Select building type') {
+                    handleToast('Please select a building type.');
+                    return;
+                  }
+                  if (district === 'Select district') {
+                    handleToast('Please select a valid district.');
+                    return;
+                  }
+                  const areaNum = parseFloat(String(roofArea).replace(/,/g, ''));
+                  if (!areaNum || isNaN(areaNum)) {
+                    handleToast('Valid roof area is required for assessment.');
+                    return;
+                  }
+                  const parsedLat = parseFloat((latitude || '').replace(/[a-zA-Z°\s]/g, ''));
+                  const parsedLon = parseFloat((longitude || '').replace(/[a-zA-Z°\s]/g, ''));
+                  if (!parsedLat || !parsedLon) {
+                    handleToast('Please capture GPS coordinates using Locate Me.');
+                    return;
+                  }
+                  
+                  const selectedObj = districtsList.find(d => String(d.districtId) === String(district));
+                  const finalDistrictName = selectedObj ? selectedObj.districtName : district;
+
                   const payload = {
                     buildingName,
                     buildingType,
                     address,
-                    districtName: district,
-                    latitude: 16.5062, // Vijayawada mock lock coord
-                    longitude: 80.6480, // Vijayawada mock lock coord
+                    districtName: finalDistrictName,
+                    latitude: parsedLat,
+                    longitude: parsedLon,
                     roofAreaSqFt: areaNum,
-                    roofMaterial,
-                    roofSlope: roofSlope === 'Flat' ? 0.0 : 2.0,
+                    roofMaterial: roofMaterial === 'Select option' ? 'Unknown' : roofMaterial,
+                    roofSlope: roofSlope === 'Select option' ? 0.0 : parseFloat(roofSlope),
                     waterDemandLpd: 500.0,
                     purpose: 'Rainwater harvesting feasibility'
                   };
@@ -528,7 +477,7 @@ export default function NewAssessment({ onCancel, onSubmit, triggerToast }) {
                 }
               }}
             >
-              {step === 6 ? 'Submit assessment' : 'Continue'}
+              {step === steps.length ? 'Submit assessment' : 'Continue'}
             </Button>
           </div>
         </div>

@@ -12,4 +12,5 @@ import java.util.List;
 public interface FieldAssessmentRepository extends JpaRepository<FieldAssessment, Long> {
     List<FieldAssessment> findByEngineer(User engineer);
     List<FieldAssessment> findByDistrict(District district);
+    long countByDistrict_DistrictId(Long districtId);
 }

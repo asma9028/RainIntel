@@ -23,13 +23,30 @@ export default function Navbar({ currentPage, onPageChange, triggerToast }) {
     if (onPageChange) onPageChange(page);
   };
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const displayName = user?.fullName || user?.username || user?.email || 'Guest';
+
+  const getInitials = (name) => {
+    if (!name || name === 'Guest') return 'GU';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  };
+  const initials = getInitials(displayName);
+  const firstName = displayName.split(/\s+/)[0];
+
   const getPageTitle = () => {
     if (isDashboard) {
-      return (
-        <>
-          Good morning, Anita <span>✦</span>
-        </>
-      );
+      const hour = new Date().getHours();
+      let greeting = 'Good morning';
+      if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
+      else if (hour >= 17 && hour < 21) greeting = 'Good evening';
+      else if (hour >= 21 || hour < 5) greeting = 'Good night';
+
+      const greetingName = (!user || (!user.fullName && !user.username && !user.email)) ? 'there' : firstName;
+
+      return `${greeting}, ${greetingName}`;
     }
     switch (currentPage) {
       case 'New Assessment':
@@ -47,10 +64,17 @@ export default function Navbar({ currentPage, onPageChange, triggerToast }) {
     }
   };
 
+  const today = new Date();
+  const weekday = today.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  const day = today.getDate().toString().padStart(2, '0');
+  const month = today.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+  const year = today.getFullYear();
+  const dateString = `${weekday}, ${day} ${month} ${year}`;
+
   return (
     <header className="topbar" style={{ position: 'relative' }}>
       <div>
-        <p className="eyebrow">WEDNESDAY, 05 AUGUST 2026</p>
+        <p className="eyebrow">{dateString}</p>
         <h1 id="page-title">{getPageTitle()}</h1>
       </div>
       <div className="top-actions">
@@ -67,7 +91,7 @@ export default function Navbar({ currentPage, onPageChange, triggerToast }) {
           icon="message-square"
           onClick={() => triggerToast && triggerToast('Opening direct messaging...')}
         />
-        <Avatar initials="AS" className="top-avatar" onClick={handleAvatarClick} />
+        <Avatar initials={initials} className="top-avatar" onClick={handleAvatarClick} />
 
         {showNotifications && (
           <>
@@ -101,7 +125,7 @@ export default function Navbar({ currentPage, onPageChange, triggerToast }) {
                 </li>
                 <li style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
                   <b>New Survey Draft</b>
-                  <p style={{ margin: '2px 0 0' }}>Draft survey saved by Anita Sharma.</p>
+                  <p style={{ margin: '2px 0 0' }}>Draft survey saved by {displayName}.</p>
                 </li>
                 <li style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
                   <b>System update</b>

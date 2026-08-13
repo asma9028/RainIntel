@@ -18,4 +18,10 @@ public interface RwhResultRepository extends JpaRepository<RwhResult, Long> {
 
     @Query("SELECT r.assessment.district.districtName, COUNT(r), SUM(r.harvestableWaterL) FROM RwhResult r GROUP BY r.assessment.district.districtName ORDER BY SUM(r.harvestableWaterL) DESC")
     List<Object[]> getDistrictRanking();
+
+    @Query("SELECT SUM(r.harvestableWaterL) FROM RwhResult r WHERE r.assessment.district.districtId = :districtId")
+    Double sumHarvestableWaterByDistrictId(@org.springframework.data.repository.query.Param("districtId") Long districtId);
+
+    @Query("SELECT r.assessment.district.districtName, COUNT(r), SUM(r.harvestableWaterL) FROM RwhResult r WHERE r.assessment.district.districtId = :districtId GROUP BY r.assessment.district.districtName")
+    List<Object[]> getDistrictRankingByDistrictId(@org.springframework.data.repository.query.Param("districtId") Long districtId);
 }

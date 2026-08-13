@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import DashboardLayout from './layouts/DashboardLayout';
 import FieldEngineerDashboard from './pages/fieldEngineer/FieldEngineerDashboard';
 import GisIntelligence from './pages/gis/GisIntelligence';
@@ -15,6 +16,7 @@ import Support from './pages/support/Support';
 import ReportPreview from './pages/reportPreview/ReportPreview';
 import Toast from './components/common/Toast';
 import { api } from './services/api';
+import { generateAssessmentPDF } from './services/pdfReport';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('Login');
@@ -24,9 +26,9 @@ function App() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastIcon, setToastIcon] = useState('circle-check');
 
-  // Sync body class 'login-mode' to hide shell on Login screen
+  // Sync body class 'login-mode' to hide shell on Login/Register screens
   useEffect(() => {
-    if (currentPage === 'Login') {
+    if (currentPage === 'Login' || currentPage === 'Register') {
       document.body.classList.add('login-mode');
     } else {
       document.body.classList.remove('login-mode');
@@ -58,8 +60,18 @@ function App() {
     if (actionKey === 'open-map') {
       setCurrentPage('GIS Intelligence');
     } else if (actionKey === 'generate-report') {
-      triggerToast('Report generation in progress...', 'file-down');
+      triggerToast('Report generation API offline.', 'circle-alert');
     }
+  };
+
+  const handlePageChange = (page) => {
+    if (page === 'Login') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setLatestAssessment(null);
+      setSelectedReport(null);
+    }
+    setCurrentPage(page);
   };
 
   const renderPage = () => {
@@ -75,7 +87,11 @@ function App() {
         return (
           <Assessments
             onNewAssessment={handleNewAssessment}
-            onRowClick={(a) => triggerToast(`Viewing survey ${a.id}...`)}
+            onRowClick={(a) => {
+              setLatestAssessment(a.raw);
+              triggerToast(`Viewing survey ${a.id}...`);
+              setCurrentPage('Assessment Result');
+            }}
           />
         );
       case 'New Assessment':
@@ -111,7 +127,8 @@ function App() {
                   building: latestAssessment.buildingName,
                   type: latestAssessment.buildingType,
                   potential: `${Math.round(latestAssessment.harvestPotentialL).toLocaleString()} L`,
-                  date: new Date(latestAssessment.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                  date: new Date(latestAssessment.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+                  raw: latestAssessment
                 });
               }
               setCurrentPage('Report Preview');
@@ -122,6 +139,7 @@ function App() {
       case '3D Design':
         return (
           <Design3D
+            assessment={latestAssessment}
             onReset={() => triggerToast('3D view camera reset.')}
             onFullscreen={() => triggerToast('Entering fullscreen Mode...')}
           />
@@ -136,7 +154,7 @@ function App() {
       case 'Reports':
         return (
           <Reports
-            onExport={() => triggerToast('Exporting reports register...')}
+            onExport={() => triggerToast('Data export API currently offline. Operating in preview mode.', 'circle-alert')}
             onReportSelect={(r) => {
               setSelectedReport(r);
               setCurrentPage('Report Preview');
@@ -147,14 +165,26 @@ function App() {
         return (
           <ReportPreview
             report={selectedReport}
-            onPrint={() => triggerToast('Sending report to system printer...')}
-            onDownload={() => triggerToast('Downloading report PDF document...')}
+            onPrint={() => triggerToast('PDF generation API currently unavailable. Running in preview mode.', 'circle-alert')}
+            onDownload={() => {
+              if (selectedReport && selectedReport.raw) {
+                try {
+                  generateAssessmentPDF(selectedReport.raw);
+                  triggerToast('Assessment PDF downloaded successfully.');
+                } catch (e) {
+                  triggerToast(`PDF generation failed: ${e.message}`, 'circle-alert');
+                }
+              } else {
+                triggerToast('No raw assessment data available to generate PDF.', 'circle-alert');
+              }
+            }}
+            onBack={() => setCurrentPage('Reports')}
           />
         );
       case 'Analytics':
         return (
           <Analytics
-            onExport={() => triggerToast('Exporting district analytics summary...')}
+            onExport={() => triggerToast('Analytics export API currently offline.', 'circle-alert')}
           />
         );
       case 'Settings':
@@ -167,7 +197,7 @@ function App() {
       case 'Support':
         return (
           <Support
-            onContact={() => triggerToast('Support request created - we will contact you shortly.')}
+            onNavigate={setCurrentPage}
             triggerToast={triggerToast}
           />
         );
@@ -177,14 +207,18 @@ function App() {
   };
 
   if (currentPage === 'Login') {
-    return <Login onLogin={handleLogin} />;
+    return <Login onLogin={handleLogin} onRegister={() => setCurrentPage('Register')} triggerToast={triggerToast} />;
+  }
+
+  if (currentPage === 'Register') {
+    return <Register onLogin={handleLogin} onCancel={() => setCurrentPage('Login')} triggerToast={triggerToast} />;
   }
 
   return (
     <>
       <DashboardLayout
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         triggerToast={triggerToast}
       >
         {renderPage()}

@@ -1,6 +1,7 @@
 package com.rainintel.business.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "SOIL_GRID_DATA")
@@ -15,39 +16,51 @@ public class SoilGridData {
     @JoinColumn(name = "GRID_CELL_ID")
     private SoilGridCell soilGridCell;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "SANDY_FRACTION")
     private Double sandyFraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "LOAMY_FRACTION")
     private Double loamyFraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "CLAYEY_FRACTION")
     private Double clayeyFraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "CLAYEY_SKELETAL_FRACTION")
     private Double clayeySkeletalFraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPTH_0_25_FRACTION")
     private Double depth025Fraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPTH_25_50_FRACTION")
     private Double depth2550Fraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPTH_50_75_FRACTION")
     private Double depth5075Fraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPTH_75_100_FRACTION")
     private Double depth75100Fraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPTH_100_150_FRACTION")
     private Double depth100150Fraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "DEPTH_150_200_FRACTION")
     private Double depth150200Fraction;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "ORGANIC_CARBON_KG_M2")
     private Double organicCarbonKgM2;
 
+    @JdbcTypeCode(java.sql.Types.NUMERIC)
     @Column(name = "INORGANIC_CARBON_KG_M2")
     private Double inorganicCarbonKgM2;
 

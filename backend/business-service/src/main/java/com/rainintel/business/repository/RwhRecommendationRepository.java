@@ -14,4 +14,7 @@ public interface RwhRecommendationRepository extends JpaRepository<RwhRecommenda
 
     @Query("SELECT AVG(r.confidenceScore) FROM RwhRecommendation r")
     Double avgConfidenceScore();
+
+    @Query("SELECT AVG(r.confidenceScore) FROM RwhRecommendation r WHERE r.assessment.district.districtId = :districtId")
+    Double avgConfidenceScoreByDistrictId(@org.springframework.data.repository.query.Param("districtId") Long districtId);
 }

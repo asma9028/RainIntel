@@ -18,7 +18,7 @@ export default function RecommendationCard({ recommendations, confidence = '96%'
     <Card>
       <div className="card-title">
         <div>
-          <h3>AI recommendation</h3>
+          <h3>Engineered recommendation</h3>
           <p>Optimised for this rooftop and local hydrogeology.</p>
         </div>
         <StatusBadge status={`${confidence} confidence`} />

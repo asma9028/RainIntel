@@ -1,55 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 import LucideIcon from '../common/LucideIcon';
+import { api } from '../../services/api';
 
 export function WaterHarvestChart() {
-  const chartData = [
-    { month: 'Jan', height: '41%' },
-    { month: 'Feb', height: '55%' },
-    { month: 'Mar', height: '48%' },
-    { month: 'Apr', height: '69%' },
-    { month: 'May', height: '56%' },
-    { month: 'Jun', height: '85%' },
-    { month: 'Jul', height: '74%' },
-    { month: 'Aug', height: '91%' },
-    { month: 'Sep', height: '70%' },
-    { month: 'Oct', height: '59%' },
-    { month: 'Nov', height: '44%' },
-    { month: 'Dec', height: '38%' },
-  ];
-
   return (
     <Card className="performance">
       <div className="card-title">
         <div>
           <h3>Water harvest potential</h3>
-          <p>
-            Monthly projected yield <span className="legend"><b></b>2026</span>
-          </p>
+          <p>Monthly projected yield <span className="legend"><b></b>2026</span></p>
         </div>
-        <button className="select">
-          This year <LucideIcon name="chevron-down" />
-        </button>
       </div>
-      <div className="chart-wrap">
-        <div className="y-axis">
-          <span>6M L</span>
-          <span>4M L</span>
-          <span>2M L</span>
-          <span>0</span>
-        </div>
-        <div className="bar-chart">
-          <div className="grid-lines"></div>
-          <div className="bars">
-            {chartData.map((data, index) => (
-              <i key={index} style={{ height: data.height }}></i>
-            ))}
-          </div>
-          <div className="months">
-            {chartData.map((data, index) => (
-              <span key={index}>{data.month}</span>
-            ))}
-          </div>
+      <div style={{ display: 'grid', placeItems: 'center', height: '180px', color: '#64748b', textAlign: 'center', fontSize: '12px', background: '#f8fafc', borderRadius: '8px', marginTop: '16px', border: '1px solid #f1f5f9' }}>
+        <div>
+          <LucideIcon name="bar-chart-2" style={{ marginBottom: '8px', opacity: 0.5, width: '24px', height: '24px' }} />
+          <p>No historical data available yet.<br/>Current totals are available in KPI cards.</p>
         </div>
       </div>
     </Card>
@@ -57,43 +23,64 @@ export function WaterHarvestChart() {
 }
 
 export function DistrictPerformanceCard() {
-  const districts = [
-    { name: 'Vijayawada', rate: '98%', colorClass: 'one' },
-    { name: 'Guntur', rate: '95%', colorClass: 'two' },
-    { name: 'Krishna', rate: '91%', colorClass: 'three' },
-  ];
+  const [districts, setDistricts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchRankings() {
+      try {
+        const topRanked = await api.analytics.getDistrictRanking();
+        setDistricts(Array.isArray(topRanked) ? topRanked : []);
+      } catch (err) {
+        setDistricts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRankings();
+  }, []);
+
+  const colorClasses = ['one', 'two', 'three', 'one', 'two'];
 
   return (
     <Card className="district">
       <div className="card-title">
         <div>
           <h3>District performance</h3>
-          <p>Assessment completion</p>
-        </div>
-        <button className="dots">
-          <LucideIcon name="ellipsis" />
-        </button>
-      </div>
-      <div className="donut">
-        <div>
-          <b>94%</b>
-          <span>Average</span>
+          <p>Assessment completion ranking</p>
         </div>
       </div>
-      <ul className="district-list">
-        {districts.map((d, index) => (
-          <li key={index}>
-            <span>
-              <b className={`dot ${d.colorClass}`}></b>
-              {d.name}
-            </span>
-            <strong>{d.rate}</strong>
-          </li>
-        ))}
-      </ul>
-      <a href="#" onClick={(e) => e.preventDefault()}>
-        View district analytics <LucideIcon name="arrow-right" />
-      </a>
+      
+      {loading ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>Loading rankings...</div>
+      ) : districts.length === 0 ? (
+        <div style={{ display: 'grid', placeItems: 'center', height: '180px', color: '#64748b', textAlign: 'center', fontSize: '12px', background: '#f8fafc', borderRadius: '8px', marginTop: '16px', border: '1px solid #f1f5f9' }}>
+          <div>
+            <LucideIcon name="map" style={{ marginBottom: '8px', opacity: 0.5, width: '24px', height: '24px' }} />
+            <p>No district ranking data available.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="donut">
+            <div>
+              <b>{districts.reduce((sum, d) => sum + (d.assessmentsCount || 0), 0)}</b>
+              <span>Total</span>
+            </div>
+          </div>
+          <ul className="district-list">
+            {districts.slice(0, 3).map((d, index) => (
+              <li key={index}>
+                <span>
+                  <b className={`dot ${colorClasses[index % colorClasses.length]}`}></b>
+                  {d.districtName || 'Unknown District'}
+                </span>
+                <strong>{d.assessmentsCount}</strong>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </Card>
   );
 }
